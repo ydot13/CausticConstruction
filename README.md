@@ -1,6 +1,6 @@
 # CausticConstruction
 
-RU: С++ OpenGL 3D рендер каустик на дне водоема
+RU: С++ OpenGL 3D рендер каустик на дне водоема.
 EN: C++ OpengL 3D renderer of caustics on bottom of the reservoir.
 
 ## Render of water
