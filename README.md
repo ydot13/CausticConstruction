@@ -23,6 +23,9 @@
 
  pixel.ba = normalize(cross(ddy, ddx)).xz; 
  ```
+ ### Wave refraction + reflection
+ 
+ **RU**:
 
 ## References
 **RU**: Данная работа была разработана опираясь на следующие статьи:
