@@ -1,6 +1,6 @@
 # CausticConstruction
 
-![](https://raw.githubusercontent.com/Ydot12344/CausticConstruction/master/wikiRes/result.gif)
+![](https://raw.githubusercontent.com/Ydot12344/CausticConstruction/master/wikiRes/ezgif-5-cf5b5c4b47.gif)
 
 **RU**: С++ OpenGL 3D рендер каустик на дне водоема.
 
