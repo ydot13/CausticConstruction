@@ -59,7 +59,7 @@ GLuint CreateTexture(GLsizei width, GLsizei height, GLint internalformat, GLenum
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, param);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, param);
     glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, GL_RGBA, fromat, NULL);
-    glGenerateMipmapEXT(GL_TEXTURE_2D);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 

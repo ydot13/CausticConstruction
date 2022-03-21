@@ -22,7 +22,7 @@ void main()
 		) * 0.25;
 
 
-	if (fl.x < 0) {
+	if ( fl.x < 0) {
 		info.g += (average - info.r) * 2.0;
 		info.g *= 0.995f;
 		info.r += info.g;
@@ -38,7 +38,7 @@ void main()
 	else {
 		float drop = max(0.0, 1.0f - length(vec2(0.7f, 0.5f) - coords) / 0.08f);
 		drop = 0.5 - cos(drop * 3.14159f) * 0.5f;
-		info.r += drop * 0.3f;
+		info.r += drop * 0.2f;
 		info.g = 0.0;
 		FragColor = info;
 	}
