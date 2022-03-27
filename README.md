@@ -13,7 +13,19 @@
 В каждый пиксель height-map хранит 4 float значения RGBA. В R-канале мы храним высоту точки, в G-скорость данной точки по вертикали, в BA хранится xy составляющие нормированного вектора нормали к данной точке.
 
 Обновление текстуры height-map:
+ ```
+ pixel.g += (average - pixel.r) * 2.0; // average - avg height for 4 nearest pixels.
+ pixel.g *= 0.995f;
+ pixel.r += pixel.g;
+ 
+ vec3 ddx = vec3(delta.x, texture(lastFrame, vec2(coords.x + delta.x, coords.y)).r - info.r, 0.f);
+ vec3 ddy = vec3(0.f, texture(lastFrame, vec2(coords.x, coords.y + delta.y)).r - info.r, delta.y);
 
+ pixel.ba = normalize(cross(ddy, ddx)).xz; 
+ ```
+ ### Wave refraction + reflection
+ 
+ **RU**:
 
 ## References
 **RU**: Данная работа была разработана опираясь на следующие статьи:
