@@ -25,7 +25,6 @@ public:
 		-1.f, 1.f, 0.f, 0.f, 1.f
 	};
 	int height, width, resolution;
-	Shader update_shader = Shader("water_update_vertex.glsl", "water_update_fragment.glsl");
-	Shader drop_shader = Shader("water_update_vertex.glsl","drop_fragment.glsl");
-	Shader view_shader = Shader("vertex_shader.glsl", "fragment_shader.glsl");
+	Shader update_shader = Shader("shader\\water\\water_update_vertex.glsl", "shader\\water\\water_update_fragment.glsl");
+	Shader drop_shader = Shader("shader\\water\\water_update_vertex.glsl","shader\\water\\drop_fragment.glsl");
 };

@@ -136,9 +136,9 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     // Setup and compile our shaders
-    Shader objectShader("vertex_shader.glsl", "fragment_shader.glsl");
+    Shader objectShader("shader\\object\\vertex_shader.glsl", "shader\\object\\fragment_shader.glsl");
     
-    Shader waterShader("water_vertex.glsl", "water_fragment.glsl");
+    Shader waterShader("shader\\water\\water_vertex.glsl", "shader\\water\\water_fragment.glsl");
 
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
@@ -152,16 +152,16 @@ int main()
 
     std::vector<std::string> faces =
     {
-        "right.jpg",
-            "left.jpg",
-            "top.jpg",
-            "bottom.jpg",
-            "front.jpg",
-            "back.jpg"
+        "res\\skybox\\right.jpg",
+            "res\\skybox\\left.jpg",
+            "res\\skybox\\top.jpg",
+            "res\\skybox\\bottom.jpg",
+            "res\\skybox\\front.jpg",
+            "res\\skybox\\back.jpg"
     };
     unsigned int cubemapTexture = loadCubemap(faces);
 
-    Shader skyboxShader("skybox_shader_vt.glsl","skybox_shader_fr.glsl");
+    Shader skyboxShader("shader\\skybox\\skybox_shader_vt.glsl","shader\\skybox\\skybox_shader_fr.glsl");
 
     skyboxShader.Use();
     skyboxShader.SetInt("skybox", 0);
@@ -176,13 +176,13 @@ int main()
 
     EnvironmentMap envMap({ ground }, screenWidth, screenWidth, 512);
     
-    Shader envMapShader("env_map_vertex.glsl", "env_map_fragment.glsl");
+    Shader envMapShader("shader\\env_map\\env_map_vertex.glsl", "shader\\env_map\\env_map_fragment.glsl");
     
     water = new Water(screenWidth, screenHeight, 128);
 
     Caustics caustics(water->waterGrid);
 
-    Shader causticsShader("caustic_vertex.glsl", "caustic_fragment.glsl");
+    Shader causticsShader("shader\\caustics\\caustic_vertex.glsl", "shader\\caustics\\caustic_fragment.glsl");
 
 
     GLuint FBO, RBO, Frame;
