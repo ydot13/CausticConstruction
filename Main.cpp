@@ -4,6 +4,7 @@
 // GLEW
 #define GLEW_STATIC
 #include <GL/glew.h>
+#include<Windows.h>
 
 // GLFW
 #include <GLFW/glfw3.h>
@@ -74,6 +75,7 @@ float skyboxVertices[] = {
 // Properties
 GLuint screenWidth = 800, screenHeight = 600;
 
+
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -92,8 +94,6 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 GLfloat Last = 0.0f;
 
-glm::vec3 lightPos(0.f, 0.0f, 5.0f);
-std::vector<glm::vec3> cubes;
 glm::mat4 light_view = glm::lookAt(glm::vec3(0.0f, 2.f, 0.0f), glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
 glm::mat4 light_projection = glm::ortho(-1.f, 1.f, 1.f, -1.f, -10.f, 10.f);
 
@@ -112,12 +112,13 @@ int main()
 
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", nullptr, nullptr); // Windowed
     glfwMakeContextCurrent(window);
+    //FreeConsole();
 
     // Set the required callback functions
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
-   // glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     // Options
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -136,111 +137,8 @@ int main()
 
     // Setup and compile our shaders
     Shader objectShader("vertex_shader.glsl", "fragment_shader.glsl");
-    Shader lampShader("lamp_vertex_shader.glsl", "lamp_fragment_shader.glsl");
-
-    // Set up our vertex data (and buffer(s)) and attribute pointers
-    float vertices[] = {
-        // positions          // normals           // texture coords
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // нижн€€-лева€
-           
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // верхн€€-права€   
-          0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // нижн€€-права€ 
-        
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // верхн€€-лева€
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // верхн€€-права€
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // нижн€€-лева€                
-         // передн€€ грань
-        
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // верхн€€-права€
-         -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // нижн€€-лева€
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // нижн€€-права€        
-         
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // нижн€€-лева€
-        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // верхн€€-права€
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // верхн€€-лева€        
-         // грань слева
-        
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // нижн€€-лева€
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // верхн€€-права€
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // верхн€€-лева€       
-      
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // верхн€€-права€
-          -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // нижн€€-лева€
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // нижн€€-права€
-         // грань справа
-         
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // верхн€€-права€  
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // верхн€€-лева€
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // нижн€€-права€          
-         
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // нижн€€-лева€
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // нижн€€-права€
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // верхн€€-лева€
-         // нижн€€ грань          
-       
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // нижн€€-лева€
-          -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // верхн€€-права€
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // верхн€€-лева€        
-        
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // верхн€€-права€
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // нижн€€-лева€
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // нижн€€-права€
-         // верхн€€ грань
-        
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // верхн€€-права€
-         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // верхн€€-лева€
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // нижн€€-права€                 
-       
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, // нижн€€-лева€  
-          0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // нижн€€-права€
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f  // верхн€€-лева€     
-    };
-
-    glm::vec3 cubePositions[] = {
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f, 2.0f, -2.5f),
-        glm::vec3(1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)
-    };
-
-    GLuint VBO, VAO, lightVAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    // Bind our Vertex Array Object first, then bind and set our buffers and pointers.
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));  
-    glEnableVertexAttribArray(1);
-    //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
-    //glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0); // Unbind VAO
-
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glBindVertexArray(0);
-
-
-    unsigned int diffuseMap = loadTexture("container2.jpg");
-    unsigned int specularMap = loadTexture("container2_specular.png");
     
     Shader waterShader("water_vertex.glsl", "water_fragment.glsl");
-    Water water =  Water(128, 128);
 
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
@@ -276,24 +174,25 @@ int main()
     };
     Mesh ground(gr_vr, { 0, 1, 2, 1, 2, 3 }, {});
 
-    EnvironmentMap envMap({ ground });
+    EnvironmentMap envMap({ ground }, screenWidth, screenWidth, 512);
     
     Shader envMapShader("env_map_vertex.glsl", "env_map_fragment.glsl");
     
-    Caustics caustics(water.waterGrid);
+    water = new Water(screenWidth, screenHeight, 128);
+
+    Caustics caustics(water->waterGrid);
 
     Shader causticsShader("caustic_vertex.glsl", "caustic_fragment.glsl");
 
-   
 
     GLuint FBO, RBO, Frame;
     glGenFramebuffers(1, &FBO);
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-    Frame = CreateTexture(800, 600, GL_RGBA, GL_UNSIGNED_BYTE, GL_MIRRORED_REPEAT);
+    Frame = CreateTexture(screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Frame, 0); 
     glGenRenderbuffers(1, &RBO);
     glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -314,7 +213,7 @@ int main()
         if (Last > 0.032) {
             Last -= 0.032;
 
-            water.Update();
+            water->Update();
 
             glm::mat4 model = glm::mat4(1.f);
             model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
@@ -333,7 +232,7 @@ int main()
             caustics.projection = light_projection;
             caustics.view = light_view;
 
-            caustics.Draw(causticsShader, water.current_frame, envMap.Frame);
+            caustics.Draw(causticsShader, water->current_frame, envMap.Frame);
 
             glDisable(GL_BLEND);
         }
@@ -451,15 +350,12 @@ int main()
 
         waterShader.SetInt("skybox", 0);
 
-        water.Draw(waterShader);
+        water->Draw(waterShader);
         
         // Swap the buffers
         glfwSwapBuffers(window);
     }
     // Properly de-allocate all resources once they've outlived their purpose
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &lightVAO);
     glDeleteVertexArrays(1, &skyboxVAO);
 
     glfwTerminate();
@@ -526,8 +422,22 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        glm::vec3 tmp = camera.Position + camera.Front;
-        cubes.push_back(glm::vec3((int)tmp.x, (int)tmp.y, (int)tmp.z));
+    glm::vec4 sc2(0, 0, 1.f,1.f);
+    glm::vec4 sc1(0, 0, -1.f,1.f);
+    glm::mat4 invrs = glm::inverse(camera.GetViewMatrix()) * glm::inverse(glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f));
+    glm::vec4 world1 = invrs * sc1;
+    glm::vec4 world2 = invrs * sc2;
+    world1 /= world1.w;
+    world2 /= world2.w;
+
+    glm::vec3 pos = world1;
+    glm::vec3 dir = world2 - world1;
+    float alpha = -pos.y * 1.f / dir.y;
+
+    float x = pos.x + alpha * dir.x;
+    float z = pos.z + alpha * dir.z;
+
+    if (alpha > 0 && x >= -1 && x <= 1 && z >= -1 && z <= 1) {
+        water->AddDrop((x + 1) / 2, (z + 1) / 2);
     }
 }

@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 // Std. Includes
