@@ -1,6 +1,6 @@
 #include"Water.h"
 
-Water::Water(int w, int h, int r) : width(w), height(h), resolution(r) {
+Water::Water(GLuint* w, GLuint* h, int r) : width(w), height(h), resolution(r) {
 	std::vector<Vertex> verticies;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
@@ -79,7 +79,7 @@ void Water::Update() {
 
 	std::swap(current_frame, last_frame);
 
-	glViewport(0, 0, width, height);
+	glViewport(0, 0, *width, *height);
 }
 
 void Water::AddDrop(float x, float y) {
@@ -116,7 +116,7 @@ void Water::AddDrop(float x, float y) {
 
 	std::swap(current_frame, last_frame);
 
-	glViewport(0, 0, width, height);
+	glViewport(0, 0, *width, *height);
 }
 
 void Water::Draw(Shader shdr) {

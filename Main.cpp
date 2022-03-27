@@ -17,6 +17,7 @@
 #include "Utilitis.h"
 #include "EnvironmentMap.h"
 #include"Caustics.h"
+#include"TBar.h"
 
 
 // GLM Mathemtics
@@ -75,12 +76,27 @@ float skyboxVertices[] = {
 // Properties
 GLuint screenWidth = 800, screenHeight = 600;
 
+std::vector<TBar> bars;
+
 
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void check_size(GLFWwindow* window, EnvironmentMap&, GLuint&, GLuint&, GLuint&);
+
+void genFBuffer(GLuint& FBO, GLuint& RBO, GLuint& Frame) {
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    Frame = CreateTexture(screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Frame, 0);
+    glGenRenderbuffers(1, &RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 void Do_Movement();
 unsigned int loadTexture(char const* path);
 
@@ -89,7 +105,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 bool keys[1024];
 GLfloat lastX = 400 , lastY = 300;
 bool firstMouse = true;
-
+bool visibleMouse = false;
 GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 GLfloat Last = 0.0f;
@@ -107,7 +123,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", nullptr, nullptr); // Windowed
@@ -174,31 +190,27 @@ int main()
     };
     Mesh ground(gr_vr, { 0, 1, 2, 1, 2, 3 }, {});
 
-    EnvironmentMap envMap({ ground }, screenWidth, screenWidth, 512);
+    EnvironmentMap envMap({ ground }, &screenWidth, &screenWidth, 512);
     
     Shader envMapShader("shader\\env_map\\env_map_vertex.glsl", "shader\\env_map\\env_map_fragment.glsl");
     
-    water = new Water(screenWidth, screenHeight, 128);
+    water = new Water(&screenWidth, &screenHeight, 128);
 
-    Caustics caustics(water->waterGrid);
+    Caustics caustics(water->waterGrid, &screenWidth, &screenHeight, 512);
 
     Shader causticsShader("shader\\caustics\\caustic_vertex.glsl", "shader\\caustics\\caustic_fragment.glsl");
 
 
     GLuint FBO, RBO, Frame;
-    glGenFramebuffers(1, &FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-    Frame = CreateTexture(screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Frame, 0); 
-    glGenRenderbuffers(1, &RBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    genFBuffer(FBO, RBO, Frame);
+
+    bars.push_back(TBar(-1, 0.8, 0.5f, 0.03f));
 
     // Game loop
     while (!glfwWindowShouldClose(window))
     {
+        check_size(window, envMap, FBO, RBO, Frame);
+
         // Set frame time
         GLfloat currentFrame = glfwGetTime();
         
@@ -351,6 +363,9 @@ int main()
         waterShader.SetInt("skybox", 0);
 
         water->Draw(waterShader);
+
+        for(auto& bar : bars)
+            bar.Show();
         
         // Swap the buffers
         glfwSwapBuffers(window);
@@ -407,7 +422,16 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    if(!visibleMouse)
+        camera.ProcessMouseMovement(xoffset, yoffset);
+
+    if (keys[GLFW_MOUSE_BUTTON_LEFT]) {
+        xpos = (xpos / screenWidth) * 2 - 1;
+        ypos = -((ypos / screenHeight) * 2 - 1);
+        for (auto& bar : bars) {
+            bar.OnMove(xpos, ypos);
+        }
+    }
 }
 
 
@@ -422,22 +446,79 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    glm::vec4 sc2(0, 0, 1.f,1.f);
-    glm::vec4 sc1(0, 0, -1.f,1.f);
-    glm::mat4 invrs = glm::inverse(camera.GetViewMatrix()) * glm::inverse(glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f));
-    glm::vec4 world1 = invrs * sc1;
-    glm::vec4 world2 = invrs * sc2;
-    world1 /= world1.w;
-    world2 /= world2.w;
+    if (action == GLFW_PRESS)
+        keys[button] = true;
+    if(action == GLFW_RELEASE)
+        keys[button] = false;
 
-    glm::vec3 pos = world1;
-    glm::vec3 dir = world2 - world1;
-    float alpha = -pos.y * 1.f / dir.y;
+    if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT) {
+        double x, y;
+        glfwGetCursorPos(window, &x, &y);
+        x = (x / screenWidth) * 2 - 1;
+        y = -((y / screenHeight) * 2 - 1);
+        for (auto& bar : bars) {
+            bar.OnMouseDown(x, y);
+        }
 
-    float x = pos.x + alpha * dir.x;
-    float z = pos.z + alpha * dir.z;
+        glm::vec4 sc2, sc1;
+        if (!visibleMouse) {
+            sc2 = glm::vec4(0, 0, 1.f, 1.f);
+            sc1 = glm::vec4(0, 0, -1.f, 1.f);
+        }
+        else {
+            sc2 = glm::vec4(x, y, 1.f, 1.f);
+            sc1 = glm::vec4(x, y, -1.f, 1.f);
+        }
 
-    if (alpha > 0 && x >= -1 && x <= 1 && z >= -1 && z <= 1) {
-        water->AddDrop((x + 1) / 2, (z + 1) / 2);
+        glm::mat4 invrs = glm::inverse(camera.GetViewMatrix()) * glm::inverse(glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f));
+        glm::vec4 world1 = invrs * sc1;
+        glm::vec4 world2 = invrs * sc2;
+        world1 /= world1.w;
+        world2 /= world2.w;
+
+        glm::vec3 pos = world1;
+        glm::vec3 dir = world2 - world1;
+        float alpha = -pos.y * 1.f / dir.y;
+
+        x = pos.x + alpha * dir.x;
+        float z = pos.z + alpha * dir.z;
+
+        if (alpha > 0 && x >= -1 && x <= 1 && z >= -1 && z <= 1) {
+            water->AddDrop((x + 1) / 2, (z + 1) / 2);
+        }
+    }
+    else if (action == GLFW_RELEASE && button == GLFW_MOUSE_BUTTON_LEFT){
+        double x, y;
+        glfwGetCursorPos(window, &x, &y);
+        x = (x / screenWidth) * 2 - 1;
+        y = -((y / screenHeight) * -1);
+        for (auto& bar : bars) {
+            bar.OnMouseUp(x, y);
+        }
+    }
+    else if (action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT) {
+        visibleMouse = !visibleMouse;
+        if (visibleMouse) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+    }
+}
+
+void check_size(GLFWwindow* window, EnvironmentMap& envMap, GLuint& FBO, GLuint& RBO, GLuint& Frame) {
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    if (screenHeight != height || screenWidth != width) {
+        screenHeight = height;
+        screenWidth = width;
+        envMap.Resize();
+
+        glDeleteTextures(1, &Frame);
+        glDeleteRenderbuffers(1, &RBO);
+        glDeleteFramebuffers(1, &FBO);
+        genFBuffer(FBO, RBO, Frame);
+        glViewport(0, 0, width, height);
     }
 }

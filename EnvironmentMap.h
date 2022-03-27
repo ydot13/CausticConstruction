@@ -5,16 +5,17 @@
 
 class EnvironmentMap {
 public:
-	EnvironmentMap(const std::vector<Mesh>& obj, int w, int h, int res)
+	EnvironmentMap(const std::vector<Mesh>& obj, GLuint* w, GLuint* h, int res)
 		: objects(obj), width(w), height(h), resolution(res){
 		Setup();
 	}
 
-	EnvironmentMap(std::vector<Mesh>&& obj, int w, int h, int res)
+	EnvironmentMap(std::vector<Mesh>&& obj, GLuint* w, GLuint* h, int res)
 		: objects(obj), width(w), height(h), resolution(res) {
 		Setup();
 	}
 
+	void Resize();
 	void Draw(Shader shader);
 
 	~EnvironmentMap();
@@ -27,7 +28,9 @@ public:
 	GLuint Frame, FBO, RBO;
 private:
 	std::vector<Mesh> objects;
-	int width, height, resolution;
+	GLuint* width;
+	GLuint* height;
+	int resolution;
 	GLenum fboStatus;
 	void Setup();
 };

@@ -32,7 +32,7 @@ public:
 	std::vector<Texture> textures;
 	float shininess = 32.f;
 
-	Mesh(const std::vector<Vertex> vertices, const std::vector<unsigned int>& indices, const std::vector<Texture>& textures) :
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices, const std::vector<Texture>& textures) :
 		vertices(vertices), indices(indices), textures(textures) {
 		setupMesh();
 	}

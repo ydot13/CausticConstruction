@@ -5,7 +5,7 @@
 
 class Water {
 public:
-	Water(int width, int height, int resolution);
+	Water(GLuint* width, GLuint* height, int resolution);
 	void Update();
 	void AddDrop(float x, float y);
 	void Draw(Shader shdr);
@@ -24,7 +24,9 @@ public:
 		1.f, 1.f, 0.f, 1.f, 1.f,
 		-1.f, 1.f, 0.f, 0.f, 1.f
 	};
-	int height, width, resolution;
+	GLuint* height;
+	GLuint* width;
+	int resolution;
 	Shader update_shader = Shader("shader\\water\\water_update_vertex.glsl", "shader\\water\\water_update_fragment.glsl");
 	Shader drop_shader = Shader("shader\\water\\water_update_vertex.glsl","shader\\water\\drop_fragment.glsl");
 };
