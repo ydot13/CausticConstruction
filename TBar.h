@@ -34,7 +34,7 @@ class TBar {
 			std::vector<unsigned int> i = { 0, 1, 2, 1, 3, 2 };
 
 			Texture barTex;
-			barTex.id = loadTexture("res\\interface\\btn.jpg");
+			barTex.id = loadTexture("res\\interface\\btn.jpg", GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR);
 
 			barTex.path = "res\\interface\\btn.jpg";
 			barTex.type = DIFFUSE;
@@ -78,7 +78,7 @@ public:
 		std::vector<unsigned int> i = { 0, 1, 2, 1, 3, 2};
 
 		Texture barTex;
-		barTex.id = loadTexture("res\\interface\\bar.jpg");
+		barTex.id = loadTexture("res\\interface\\bar.jpg", GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR);
 
 		barTex.path = "res\\interface\\bar.jpg";
 		barTex.type = DIFFUSE;
@@ -103,7 +103,6 @@ private:
 };
 
 bool TBar::Hit(float x, float y) {
-	std::cout << x << " " << y << '\n';
 	return (x >= posX && x <= posX + Width && y >= posY && y <= posY + Height);
 }
 

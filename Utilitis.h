@@ -5,7 +5,7 @@
 #include<vector>
 #include<iostream>
 
-unsigned int loadTexture(char const* path);
+unsigned int loadTexture(char const* path, GLint mag_filter_param = GL_LINEAR, GLint min_filter_param = GL_LINEAR_MIPMAP_LINEAR);
 
 GLuint CreateTexture(GLsizei width, GLsizei height, GLint internalformat, GLenum fromat, GLint param = GL_CLAMP_TO_EDGE);
 
