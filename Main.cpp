@@ -81,13 +81,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void check_size(GLFWwindow* window, GLuint&, GLuint&, GLuint&);
 void genFBuffer(GLuint& FBO, GLuint& RBO, GLuint& Frame);
 void Do_Movement();
+void setFullscreen(bool fullscreen, GLFWwindow* window);
 void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint& cubemapTexture);
 // Properties
 GLuint screenWidth = 800, screenHeight = 600;
-
+GLuint screenWidthBeforeFSc, screenHeightBeforeFSc;
+int screenPosXBeforeFSc, screenPosYBeforeFSc;
 bool keys[1024];
 bool firstMouse = true;
 bool visibleMouse = false;
+bool isFullScreen = false;
 
 GLfloat lastX = 400, lastY = 300;
 GLfloat deltaTime = 0.0f;
@@ -115,6 +118,7 @@ std::shared_ptr<Shader> skyboxShader;
 std::shared_ptr<Shader> envMapShader;
 std::shared_ptr<Shader> causticsShader;
 
+
 // The MAIN function, from here we start our application and run our Game loop
 int main()
 {
@@ -138,7 +142,7 @@ int main()
 
     // Options
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    if (!glfwRawMouseMotionSupported())
+    if (glfwRawMouseMotionSupported())
         glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
     // Initialize GLEW to setup the OpenGL Function pointers
@@ -210,7 +214,6 @@ int main()
     bars.push_back(TBar(-1, 0.8, 0.5f, 0.03f));
 
     glm::mat4 model, view, projection;
-
     // Game loop
     while (!glfwWindowShouldClose(window))
     {
@@ -326,6 +329,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         else if (action == GLFW_RELEASE)
             keys[key] = false;
     }
+    if (action == GLFW_PRESS && key == GLFW_KEY_F11) {
+        isFullScreen = !isFullScreen;
+        setFullscreen(isFullScreen, window);
+    }
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
@@ -359,8 +366,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(yoffset);
-
-    water->Update();
 }
 
 
@@ -499,4 +504,21 @@ void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint&
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
     glDepthFunc(GL_LESS); // set depth function back to default
+}
+
+void setFullscreen(bool fullscreen, GLFWwindow* window)
+{
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    
+    if (fullscreen) {
+        screenHeightBeforeFSc = screenHeight;
+        screenWidthBeforeFSc = screenWidth;
+        glfwGetWindowPos(window, &screenPosXBeforeFSc, &screenPosYBeforeFSc);
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    }
+
+    if (!fullscreen) {
+        glfwSetWindowMonitor(window, nullptr, screenPosXBeforeFSc, screenPosYBeforeFSc, screenWidthBeforeFSc, screenHeightBeforeFSc, GLFW_DONT_CARE);
+    }
 }

@@ -96,13 +96,14 @@ private:
 	TBarButton BarButton;
 	float Width, Height;
 	float posX, posY;
-	bool m_bButtonClick;
+	bool m_bButtonClick = false;
 
 	std::shared_ptr<Mesh> barMesh;
 	Shader shdr = Shader("shader\\interface\\interface_vertex.glsl", "shader\\interface\\interface_fragment.glsl");
 };
 
 bool TBar::Hit(float x, float y) {
+	std::cout << x << " " << y << '\n';
 	return (x >= posX && x <= posX + Width && y >= posY && y <= posY + Height);
 }
 
