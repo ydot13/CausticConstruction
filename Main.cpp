@@ -9,7 +9,7 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
-// GL includes
+// My includes
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
@@ -73,47 +73,47 @@ float skyboxVertices[] = {
      1.0f, -1.0f,  1.0f
 };
 
-// Properties
-GLuint screenWidth = 800, screenHeight = 600;
-
-std::vector<TBar> bars;
-
-
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void check_size(GLFWwindow* window, EnvironmentMap&, GLuint&, GLuint&, GLuint&);
-
-void genFBuffer(GLuint& FBO, GLuint& RBO, GLuint& Frame) {
-    glGenFramebuffers(1, &FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-    Frame = CreateTexture(screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Frame, 0);
-    glGenRenderbuffers(1, &RBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
+void check_size(GLFWwindow* window, GLuint&, GLuint&, GLuint&);
+void genFBuffer(GLuint& FBO, GLuint& RBO, GLuint& Frame);
 void Do_Movement();
-unsigned int loadTexture(char const* path);
+void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint& cubemapTexture);
+// Properties
+GLuint screenWidth = 800, screenHeight = 600;
+
+bool keys[1024];
+bool firstMouse = true;
+bool visibleMouse = false;
+
+GLfloat lastX = 400, lastY = 300;
+GLfloat deltaTime = 0.0f;
+GLfloat lastFrame = 0.0f;
+GLfloat waterUpdTimer = 0.0f;
+
+// Interface
+std::vector<TBar> bars;
 
 // Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-bool keys[1024];
-GLfloat lastX = 400 , lastY = 300;
-bool firstMouse = true;
-bool visibleMouse = false;
-GLfloat deltaTime = 0.0f;
-GLfloat lastFrame = 0.0f;
-GLfloat Last = 0.0f;
-
 glm::mat4 light_view = glm::lookAt(glm::vec3(0.0f, 2.f, 0.0f), glm::vec3(0.0f, 0.f, 0.f), glm::vec3(0.f, 0.f, -1.f));
 glm::mat4 light_projection = glm::ortho(-1.f, 1.f, 1.f, -1.f, -10.f, 10.f);
 
-Water* water;
+// Objects
+std::shared_ptr<Water> water;
+std::shared_ptr<EnvironmentMap> envMap;
+std::shared_ptr<Caustics> caustics;
+std::shared_ptr<Mesh> ground;
+
+// Shaders
+std::shared_ptr<Shader> objectShader;
+std::shared_ptr<Shader> waterShader;
+std::shared_ptr<Shader> skyboxShader;
+std::shared_ptr<Shader> envMapShader;
+std::shared_ptr<Shader> causticsShader;
 
 // The MAIN function, from here we start our application and run our Game loop
 int main()
@@ -152,10 +152,13 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     // Setup and compile our shaders
-    Shader objectShader("shader\\object\\vertex_shader.glsl", "shader\\object\\fragment_shader.glsl");
-    
-    Shader waterShader("shader\\water\\water_vertex.glsl", "shader\\water\\water_fragment.glsl");
+    objectShader   = std::make_shared<Shader>("shader\\object\\vertex_shader.glsl", "shader\\object\\fragment_shader.glsl");    
+    waterShader    = std::make_shared<Shader>("shader\\water\\water_vertex.glsl", "shader\\water\\water_fragment.glsl");
+    skyboxShader   = std::make_shared<Shader>("shader\\skybox\\skybox_shader_vt.glsl", "shader\\skybox\\skybox_shader_fr.glsl");
+    envMapShader   = std::make_shared<Shader>("shader\\env_map\\env_map_vertex.glsl", "shader\\env_map\\env_map_fragment.glsl");
+    causticsShader = std::make_shared<Shader>("shader\\caustics\\caustic_vertex.glsl", "shader\\caustics\\caustic_fragment.glsl");
 
+    // SkyBox setup
     unsigned int skyboxVAO, skyboxVBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -164,7 +167,6 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
 
     std::vector<std::string> faces =
     {
@@ -176,75 +178,76 @@ int main()
             "res\\skybox\\back.jpg"
     };
     unsigned int cubemapTexture = loadCubemap(faces);
+    skyboxShader->Use();
+    skyboxShader->SetInt("skybox", 0);
 
-    Shader skyboxShader("shader\\skybox\\skybox_shader_vt.glsl","shader\\skybox\\skybox_shader_fr.glsl");
-
-    skyboxShader.Use();
-    skyboxShader.SetInt("skybox", 0);
-
+    // Ground setup
     std::vector<Vertex> gr_vr = {
         {glm::vec3(-1.f, 0.f, -1.f), glm::vec3(), glm::vec2(0.f, 0.f)},
         {glm::vec3(1.f, 0.f, -1.f), glm::vec3(), glm::vec2(1.f, 0.f)},
         {glm::vec3(-1.f, 0.f, 1.f), glm::vec3(), glm::vec2(0.f, 1.f)},
         {glm::vec3(1.f, 0.f, 1.f), glm::vec3(), glm::vec2(1.f, 1.f)},
     };
-    Mesh ground(gr_vr, { 0, 1, 2, 1, 2, 3 }, {});
+    std::vector<unsigned int> ind = { 0, 1, 2, 1, 2, 3 };
+    std::vector<Texture> t;
+    ground = std::make_shared<Mesh>(gr_vr, ind, t);
 
-    EnvironmentMap envMap({ ground }, &screenWidth, &screenWidth, 512);
+    // EnvironmentMap setup
+    std::vector<Mesh> objects = { *ground };
+    envMap = std::make_shared<EnvironmentMap>(objects, &screenWidth, &screenWidth, 512);
     
-    Shader envMapShader("shader\\env_map\\env_map_vertex.glsl", "shader\\env_map\\env_map_fragment.glsl");
-    
-    water = new Water(&screenWidth, &screenHeight, 128);
+    // Water setup
+    water = std::make_shared<Water>(&screenWidth, &screenHeight, 128);
 
-    Caustics caustics(water->waterGrid, &screenWidth, &screenHeight, 512);
+    // Caustic setup
+    caustics = std::make_shared<Caustics>(water->waterGrid, &screenWidth, &screenHeight, 512);
 
-    Shader causticsShader("shader\\caustics\\caustic_vertex.glsl", "shader\\caustics\\caustic_fragment.glsl");
-
-
+    // Setup FrameBuffer
     GLuint FBO, RBO, Frame;
     genFBuffer(FBO, RBO, Frame);
 
+    // Setup Interface
     bars.push_back(TBar(-1, 0.8, 0.5f, 0.03f));
+
+    glm::mat4 model, view, projection;
 
     // Game loop
     while (!glfwWindowShouldClose(window))
     {
-        check_size(window, envMap, FBO, RBO, Frame);
+        check_size(window, FBO, RBO, Frame);
 
         // Set frame time
         GLfloat currentFrame = glfwGetTime();
-        
-        
         deltaTime = currentFrame - lastFrame;
 
         glfwSetWindowTitle(window, std::to_string(1.f / (deltaTime)).c_str());
         lastFrame = currentFrame;
 
-        Last += deltaTime;
+        waterUpdTimer += deltaTime;
 
-        if (Last > 0.032) {
-            Last -= 0.032;
-
+        if (waterUpdTimer > 0.032) {
+            waterUpdTimer -= 0.032;
+            // Upd water
             water->Update();
 
-            glm::mat4 model = glm::mat4(1.f);
+            // Upd EnvMap
+            model = glm::mat4(1.f);
             model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
+            envMap->models = { model };
+            envMap->view = light_view;
+            envMap->projection = light_projection;
+            envMap->Draw(*envMapShader);
 
-            envMap.models = { model };
-            envMap.view = light_view;
-            envMap.projection = light_projection;
-
-            envMap.Draw(envMapShader);
-
+            // Upd caustics
             glEnable(GL_BLEND);
             glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ZERO);
             glBlendEquation(GL_FUNC_ADD);
 
-            caustics.model = glm::mat4(1.f);
-            caustics.projection = light_projection;
-            caustics.view = light_view;
+            caustics->model = glm::mat4(1.f);
+            caustics->projection = light_projection;
+            caustics->view = light_view;
 
-            caustics.Draw(causticsShader, water->current_frame, envMap.Frame);
+            caustics->Draw(*causticsShader, water->current_frame, envMap->Frame);
 
             glDisable(GL_BLEND);
         }
@@ -255,115 +258,33 @@ int main()
         Do_Movement();
 
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
-        // Clear the colorbuffer
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glm::mat4 model(1.f);
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f);
-       
-        
-        
-        //Ground
-        objectShader.Use();
-        model = glm::mat4(1.f);
-        model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
-        objectShader.SetMat4("model", model);
-        objectShader.SetMat4("view", view);
-        objectShader.SetMat4("projection", projection);
-        objectShader.SetMat4("lightProjection", light_projection);
-        objectShader.SetMat4("lightView", light_view);
-        
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, caustics.Frame);
-        objectShader.SetInt("caustics", 0);
-        ground.Draw(objectShader);
-
-
-        //SkyBox
-        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-
-        
-        skyboxShader.Use();
-
-        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
-        skyboxShader.SetMat4("view", view);
-        skyboxShader.SetMat4("projection", projection);
-        // skybox cube
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // set depth function back to default
-
+        DrawScene(model, view, projection, skyboxVAO, cubemapTexture);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glBindTexture(GL_TEXTURE_2D, Frame);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-
-        // Clear the colorbuffer
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        model = glm::mat4(1.f);
-        view = camera.GetViewMatrix();
-        projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f);
-
-
-
-        //Ground
-        objectShader.Use();
-        model = glm::mat4(1.f);
-        model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
-        objectShader.SetMat4("model", model);
-        objectShader.SetMat4("view", view);
-        objectShader.SetMat4("projection", projection);
-        objectShader.SetMat4("lightProjection", light_projection);
-        objectShader.SetMat4("lightView", light_view);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, caustics.Frame);
-        objectShader.SetInt("caustics", 0);
-
-        ground.Draw(objectShader);
-
-        //SkyBox
-        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-
-
-        skyboxShader.Use();
-
-        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
-        skyboxShader.SetMat4("view", view);
-        skyboxShader.SetMat4("projection", projection);
-        // skybox cube
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // set depth function back to default
-
+        DrawScene(model, view, projection, skyboxVAO, cubemapTexture);
+        
         //Water
         view = camera.GetViewMatrix();
-        waterShader.Use();
+        waterShader->Use();
+        waterShader->SetInt("skybox", 0);
+        waterShader->SetInt("env", 1);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, Frame);
-        waterShader.SetInt("env", 1);
-        waterShader.SetMat4("model", glm::mat4(1.f));
-        waterShader.SetMat4("view", view);
-        waterShader.SetMat4("projection", projection);
-        waterShader.SetVec3("cameraPos", camera.Position);
+        
+        waterShader->SetMat4("model", glm::mat4(1.f));
+        waterShader->SetMat4("view", view);
+        waterShader->SetMat4("projection", projection);
+        waterShader->SetVec3("cameraPos", camera.Position);
 
-        waterShader.SetInt("skybox", 0);
+        waterShader->SetFloat("turb", bars[0].getValue());
 
-        water->Draw(waterShader);
-
+        water->Draw(*waterShader);
         for(auto& bar : bars)
             bar.Show();
         
@@ -383,13 +304,13 @@ void Do_Movement()
 {
     // Camera controls
     if (keys[GLFW_KEY_W])
-        camera.ProcessKeyboard(FORWARD, deltaTime);
+        camera.ProcessKeyboard(Camera_Movement::FORWARD, deltaTime);
     if (keys[GLFW_KEY_S])
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
+        camera.ProcessKeyboard(Camera_Movement::BACKWARD, deltaTime);
     if (keys[GLFW_KEY_A])
-        camera.ProcessKeyboard(LEFT, deltaTime);
+        camera.ProcessKeyboard(Camera_Movement::LEFT, deltaTime);
     if (keys[GLFW_KEY_D])
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+        camera.ProcessKeyboard(Camera_Movement::RIGHT, deltaTime);
 }
 
 // Is called whenever a key is pressed/released via GLFW
@@ -507,13 +428,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
-void check_size(GLFWwindow* window, EnvironmentMap& envMap, GLuint& FBO, GLuint& RBO, GLuint& Frame) {
+void check_size(GLFWwindow* window, GLuint& FBO, GLuint& RBO, GLuint& Frame) {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     if (screenHeight != height || screenWidth != width) {
         screenHeight = height;
         screenWidth = width;
-        envMap.Resize();
+        envMap->Resize();
 
         glDeleteTextures(1, &Frame);
         glDeleteRenderbuffers(1, &RBO);
@@ -521,4 +442,61 @@ void check_size(GLFWwindow* window, EnvironmentMap& envMap, GLuint& FBO, GLuint&
         genFBuffer(FBO, RBO, Frame);
         glViewport(0, 0, width, height);
     }
+}
+
+void genFBuffer(GLuint& FBO, GLuint& RBO, GLuint& Frame) {
+    glGenFramebuffers(1, &FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    Frame = CreateTexture(screenWidth, screenHeight, GL_RGBA, GL_UNSIGNED_BYTE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Frame, 0);
+    glGenRenderbuffers(1, &RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screenWidth, screenHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint& cubemapTexture) {
+    // Clear the colorbuffer
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    model = glm::mat4(1.f);
+    view = camera.GetViewMatrix();
+    projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f);
+
+
+
+    //Ground
+    objectShader->Use();
+    model = glm::mat4(1.f);
+    model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
+    objectShader->SetMat4("model", model);
+    objectShader->SetMat4("view", view);
+    objectShader->SetMat4("projection", projection);
+    objectShader->SetMat4("lightProjection", light_projection);
+    objectShader->SetMat4("lightView", light_view);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, caustics->Frame);
+    objectShader->SetInt("caustics", 0);
+    ground->Draw(*objectShader);
+
+
+    //SkyBox
+    glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+
+
+    skyboxShader->Use();
+
+    view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
+    skyboxShader->SetMat4("view", view);
+    skyboxShader->SetMat4("projection", projection);
+    // skybox cube
+    glBindVertexArray(skyboxVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+    glDepthFunc(GL_LESS); // set depth function back to default
 }

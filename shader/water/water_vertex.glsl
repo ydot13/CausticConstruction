@@ -42,5 +42,5 @@ void main() {
 	refractedPosition[2] = projectedRefractedPosition.xy / projectedRefractedPosition.w;
 
 
-	gl_Position = projection*view*model*vec4(Position, 1.f);
+	gl_Position = projection*view*vec4(Position, 1.f);
 }

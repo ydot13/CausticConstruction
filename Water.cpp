@@ -120,9 +120,9 @@ void Water::AddDrop(float x, float y) {
 }
 
 void Water::Draw(Shader shdr) {
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, last_frame);
-	shdr.SetInt("heightMap", 0);
+	shdr.SetInt("heightMap", 3);
 
 	waterGrid->Draw(shdr);
 }
