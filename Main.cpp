@@ -195,13 +195,17 @@ int main()
         {glm::vec3(1.f, 0.f, 1.f), glm::vec3(0.f, 1.f, 0.f), glm::vec2(1.f, 1.f)},
     };
     std::vector<unsigned int> ind = { 0, 1, 2, 1, 2, 3 };
-    std::vector<Texture> t;
+    Texture sand;
+    sand.id = loadTexture("res\\sand.jpg");
+    sand.path = "res\\sand.jpg";
+    sand.type = DIFFUSE;
+    std::vector<Texture> t = {sand};
     ground = std::make_shared<Mesh>(gr_vr, ind, t);
 
     // Rock load
-    rock = std::make_shared<Model>("res\\rock\\rock.obj");
+    rock = std::make_shared<Model>("res/rock/rock.obj");
 
-    shark = std::make_shared<Model>("res\\shark\\WhiteShark.obj");
+    shark = std::make_shared<Model>("res/submarine/Odyssey_OBJ.obj");
 
     // EnvironmentMap setup
     std::vector<std::shared_ptr<Drawable>> objects = { ground, rock, shark};
@@ -247,7 +251,7 @@ int main()
             models.push_back(model);
 
             model = glm::mat4(1.f);
-            model = glm::translate(model, glm::vec3(0, -0.7f, 0.f));
+            model = glm::translate(model, glm::vec3(-0.3, -0.7f, 0.f));
             model = glm::rotate(model, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
             float scaleFactor = 1.f / 20;
             model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
@@ -255,8 +259,8 @@ int main()
             models.push_back(model);
 
             model = glm::mat4(1.f);
-            model = glm::translate(model, glm::vec3(0.4f, -0.3f, 0.f));
-            scaleFactor = 1.f / 10;
+            model = glm::translate(model, glm::vec3(0.4f, -0.5f, 0.f));
+            scaleFactor = 1.f / 1000;
             model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
             models.push_back(model);
 
@@ -499,14 +503,14 @@ void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint&
     objectShader->SetMat4("lightProjection", light_projection);
     objectShader->SetMat4("lightView", light_view);
 
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, caustics->Frame);
-    objectShader->SetInt("caustics", 0);
+    objectShader->SetInt("caustics", 1);
     ground->Draw(*objectShader);
 
     //Rock
     model = glm::mat4(1.f);
-    model = glm::translate(model, glm::vec3(0, -0.7f, 0.f));
+    model = glm::translate(model, glm::vec3(-0.3, -0.7f, 0.f));
     model = glm::rotate(model, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
     float scaleFactor = 1.f / 20;
     model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
@@ -516,15 +520,15 @@ void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint&
     objectShader->SetMat4("projection", projection);
     objectShader->SetMat4("lightProjection", light_projection);
     objectShader->SetMat4("lightView", light_view);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, caustics->Frame);
-    objectShader->SetInt("caustics", 0);
+    objectShader->SetInt("caustics", 1);
     rock->Draw(*objectShader);
 
-    //Shark
+    //Submarine
     model = glm::mat4(1.f);
-    model = glm::translate(model, glm::vec3(0.4f, -0.3f, 0.f));
-    scaleFactor = 1.f / 10;
+    model = glm::translate(model, glm::vec3(0.4f, -0.5f, 0.f));
+    scaleFactor = 1.f / 1000;
     model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
     objectShader->Use();
     objectShader->SetMat4("model", model);
@@ -532,9 +536,9 @@ void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint&
     objectShader->SetMat4("projection", projection);
     objectShader->SetMat4("lightProjection", light_projection);
     objectShader->SetMat4("lightView", light_view);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, caustics->Frame);
-    objectShader->SetInt("caustics", 0);
+    objectShader->SetInt("caustics", 1);
     shark->Draw(*objectShader);
 
     //SkyBox

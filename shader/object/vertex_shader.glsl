@@ -25,7 +25,7 @@ void main() {
 	vec4 lightProjection = lightProjection * lightView * worldPos;
 
 	lightPos = 0.5 + lightProjection.xyz / lightProjection.w * 0.5;
-
-	gl_Position = projection * view * model * vec4(position, 1.f);
 	TexCoords = texCoords;
+	gl_Position = projection * view * model * vec4(position, 1.f);
+
 }

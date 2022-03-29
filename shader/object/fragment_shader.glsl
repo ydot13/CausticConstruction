@@ -5,6 +5,12 @@ in vec3 lightPos;
 uniform sampler2D caustics;
 in float lightIntensity;
 
+struct Material {
+    sampler2D diffuse1;
+};
+
+uniform Material material;
+
 in vec2 TexCoords;
 out vec4 color;
 
@@ -41,5 +47,5 @@ void main() {
 
         computedLightIntensity += causticsIntensity * smoothstep(0., 1., lightIntensity);
     }
-	color = vec4(underwaterColor * computedLightIntensity, 1.);
+	color = vec4(texture(material.diffuse1, vec2(TexCoords.x, -TexCoords.y)).rgb* computedLightIntensity, 1.);
 }
