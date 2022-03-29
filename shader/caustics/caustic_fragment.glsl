@@ -14,8 +14,8 @@ void main() {
 	float causticsIntensity = 0.;
 
     if (depth >= waterDepth) {
-        float oldArea = length(dFdx(oldPosition)) * length(dFdy(oldPosition));
-        float newArea = length(dFdx(newPosition)) * length(dFdy(newPosition));
+        float oldArea = length(dFdx(oldPosition).xyz) * length(dFdy(oldPosition).xyz);
+        float newArea = length(dFdx(newPosition).xyz) * length(dFdy(newPosition).xyz);
 
 
         float ratio;
@@ -23,12 +23,12 @@ void main() {
         // Prevent dividing by zero (debug NVidia drivers)
         if (newArea == 0.) {
             // Arbitrary large value
-            ratio = 2.0e+20;
+            ratio = 10;
         }
         else {
             ratio = oldArea / newArea;
         }
-
+        
         causticsIntensity = causticsFactor * ratio;
     }
     color = vec4(causticsIntensity, causticsIntensity, causticsIntensity, depth);

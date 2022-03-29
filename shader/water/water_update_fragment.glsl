@@ -3,10 +3,13 @@ precision highp float;
 out vec4 FragColor;
 uniform sampler2D lastFrame;
 in vec2 coord;
+
+uniform float delta;
+
 void main()
 {
 
-	vec2 delta = vec2(1.f / 120, 1.f / 120);
+	vec2 delta = vec2(1.f / delta, 1.f / delta);
 	vec2 coords = coord;
 	vec4 info = texture(lastFrame, coords);
 

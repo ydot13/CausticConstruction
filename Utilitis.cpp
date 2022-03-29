@@ -94,3 +94,32 @@ unsigned int loadTexture(char const* path, GLint mag_filter_param, GLint min_fil
 
     return textureID;
 }
+
+std::shared_ptr<Mesh> genGrid(int size) {
+    std::vector<Vertex> verticies;
+    std::vector<unsigned int> indices;
+    std::vector<Texture> textures;
+    float deltaW = 1.f / size;
+    float deltaH = 1.f / size;
+    for (long long i = 0; i < 1ll * (size + 1) * (size + 1); ++i) {
+        glm::vec3 Position((i % (size + 1)) * deltaW, 0.f, (i / (size + 1)) * deltaH);
+        Position.x = Position.x * 2 - 1;
+        Position.z = Position.z * 2 - 1;
+        Vertex vert;
+        vert.Position = Position;
+
+        vert.TexCoords = glm::vec2(Position.x, Position.z);
+        verticies.push_back(std::move(vert));
+        if (i / (size + 1) < size && i % (size + 1) < size) {
+            indices.push_back(i);
+            indices.push_back(i + 1);
+            indices.push_back(i + (size + 1));
+
+            indices.push_back(i + size + 1);
+            indices.push_back(i + size + 2);
+            indices.push_back(i + 1);
+        }
+    }
+
+    return std::make_shared<Mesh>(verticies, indices, textures);
+}

@@ -5,19 +5,19 @@
 #include<SOIL.h>
 #include<unordered_map>
 #include"Utilitis.h"
-
+#include"Drawable.h"
 //Assimp
 #include<assimp/Importer.hpp>
 #include<assimp/scene.h>
 #include<assimp/postprocess.h>
 
-class Model {
+class Model : public Drawable {
 public:
 	Model(const std::string& path) {
 		loadModel(path);
 	}
 
-	void Draw(Shader& shader);
+	void Draw(Shader& shader) const override;
 
 	std::vector<Mesh> meshes;
 	std::string directory;

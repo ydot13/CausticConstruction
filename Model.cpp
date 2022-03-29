@@ -1,6 +1,6 @@
 #include"Model.h"
 
-void Model::Draw(Shader& shader) {
+void Model::Draw(Shader& shader) const{
 	for (const auto& mesh : meshes)
 		mesh.Draw(shader);
 }

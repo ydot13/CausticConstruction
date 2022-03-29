@@ -10,17 +10,21 @@ uniform mat4 projection;
 uniform mat4 lightView;
 uniform mat4 lightProjection;
 
-out vec3 lightPos;
 
+out float lightIntensity;
+out vec3 lightPos;
 out vec2 TexCoords;
 
 
 void main() {
+	
+	lightIntensity = -dot(vec3(0.f, -1.f, 0.f), normalize(transpose(inverse(mat3(model))) * normal));
+	
 	vec4 worldPos = model * vec4(position, 1.f);
 
 	vec4 lightProjection = lightProjection * lightView * worldPos;
 
-	lightPos = vec3(lightProjection.xy*0.5f + 0.5f, 0.5f + lightProjection.z / lightProjection.w * 0.5);
+	lightPos = 0.5 + lightProjection.xyz / lightProjection.w * 0.5;
 
 	gl_Position = projection * view * model * vec4(position, 1.f);
 	TexCoords = texCoords;

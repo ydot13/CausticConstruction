@@ -8,6 +8,8 @@
 #include<assimp/scene.h>
 #include<assimp/postprocess.h>
 
+#include"Drawable.h"
+
 enum TextureType {
 	DIFFUSE,
 	SPECULAR
@@ -25,7 +27,7 @@ struct Texture {
 	aiString path;
 };
 
-class Mesh {
+class Mesh : public Drawable{
 public:
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -37,7 +39,7 @@ public:
 		setupMesh();
 	}
 
-	void Draw(Shader& shader) const;
+	void Draw(Shader& shader) const override;
 
 private:
 	void setupMesh();

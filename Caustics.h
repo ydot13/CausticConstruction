@@ -4,8 +4,8 @@
 
 class Caustics {
 public:
-	Caustics(std::shared_ptr<Mesh> waterGr, GLuint* w, GLuint* h, int r)
-		: waterGrid(waterGr), width(w), height(h), resolution(r) {
+	Caustics(GLuint* w, GLuint* h, int r)
+		: waterGrid(genGrid(256)), width(w), height(h), resolution(r) {
 		Setup();
 	}
 
@@ -34,7 +34,9 @@ private:
 
 void Caustics::Draw(Shader shader, GLuint water, GLuint env) {
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
+	glEnable(GL_BLEND);
+	glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ZERO);
+	glBlendEquation(GL_FUNC_ADD);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glViewport(0, 0, resolution, resolution);
@@ -50,16 +52,16 @@ void Caustics::Draw(Shader shader, GLuint water, GLuint env) {
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, env);
 	shader.SetInt("env", 1);
-	shader.SetFloat("deltaEnvTexture", 1.f / resolution);
-	shader.SetVec3("light", glm::vec3(0.f, 0.f, 1.f));
+	shader.SetFloat("deltaEnvTexture", 1.f / (resolution-10));
+	shader.SetVec3("light", glm::vec3(0.f, -1.f, 0.f));
 
 	waterGrid->Draw(shader);
-
-
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, Frame);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_BLEND);
 
 	glViewport(0, 0, *width, *height);
 }

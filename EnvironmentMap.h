@@ -2,15 +2,16 @@
 #include"Mesh.h"
 #include"Shader.h"
 #include"Utilitis.h"
+#include "Drawable.h"
 
 class EnvironmentMap {
 public:
-	EnvironmentMap(const std::vector<Mesh>& obj, GLuint* w, GLuint* h, int res)
+	EnvironmentMap(const std::vector<std::shared_ptr<Drawable>>& obj, GLuint* w, GLuint* h, int res)
 		: objects(obj), width(w), height(h), resolution(res){
 		Setup();
 	}
 
-	EnvironmentMap(std::vector<Mesh>&& obj, GLuint* w, GLuint* h, int res)
+	EnvironmentMap(std::vector<std::shared_ptr<Drawable>>&& obj, GLuint* w, GLuint* h, int res)
 		: objects(obj), width(w), height(h), resolution(res) {
 		Setup();
 	}
@@ -27,7 +28,7 @@ public:
 
 	GLuint Frame, FBO, RBO;
 private:
-	std::vector<Mesh> objects;
+	std::vector<std::shared_ptr<Drawable>> objects;
 	GLuint* width;
 	GLuint* height;
 	int resolution;

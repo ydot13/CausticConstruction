@@ -1,32 +1,8 @@
 #include"Water.h"
 
 Water::Water(GLuint* w, GLuint* h, int r) : width(w), height(h), resolution(r) {
-	std::vector<Vertex> verticies;
-	std::vector<unsigned int> indices;
-	std::vector<Texture> textures;
-	float deltaW = 1.f / resolution;
-	float deltaH = 1.f / resolution;
-	for (long long i = 0; i < 1ll * (resolution + 1) * (resolution + 1); ++i) {
-		glm::vec3 Position((i % (resolution + 1)) * deltaW, 0.f, (i / (resolution + 1)) * deltaH);
-		Position.x = Position.x * 2 - 1;
-		Position.z = Position.z * 2 - 1;
-		Vertex vert;
-		vert.Position = Position;
 
-		vert.TexCoords = glm::vec2(Position.x, Position.z);
-		verticies.push_back(std::move(vert));
-		if (i / (resolution + 1) < resolution && i % (resolution + 1) < resolution) {
-			indices.push_back(i);
-			indices.push_back(i + 1);
-			indices.push_back(i + (resolution + 1));
-
-			indices.push_back(i + resolution + 1);
-			indices.push_back(i + resolution + 2);
-			indices.push_back(i + 1);
-		}
-	}
-
-	waterGrid = std::make_shared<Mesh>(verticies, indices, textures);
+	waterGrid = genGrid(resolution);
 
 	current_frame = CreateTexture(resolution, resolution, GL_RGBA16F, GL_FLOAT);
 	last_frame = CreateTexture(resolution, resolution, GL_RGBA16F, GL_FLOAT);
@@ -65,6 +41,7 @@ void Water::Update() {
 		glBindTexture(GL_TEXTURE_2D, last_frame);
 		update_shader.Use();
 		update_shader.SetInt("lastFrame", 0);
+		update_shader.SetFloat("delta", resolution - 5);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
