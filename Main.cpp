@@ -82,7 +82,7 @@ void check_size(GLFWwindow* window, GLuint&, GLuint&, GLuint&);
 void genFBuffer(GLuint& FBO, GLuint& RBO, GLuint& Frame);
 void Do_Movement();
 void setFullscreen(bool fullscreen, GLFWwindow* window);
-void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint& cubemapTexture);
+void DrawScene(glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint& cubemapTexture);
 // Properties
 GLuint screenWidth = 800, screenHeight = 600;
 GLuint screenWidthBeforeFSc, screenHeightBeforeFSc;
@@ -120,6 +120,10 @@ std::shared_ptr<Shader> causticsShader;
 std::shared_ptr<Model> rock;
 std::shared_ptr<Model> shark;
 
+// Model matrixes
+glm::mat4 model_ground, model_rock, model_sub;
+glm::mat4 model_ground_n, model_rock_n, model_sub_n;
+glm::mat4 projection;
 
 // The MAIN function, from here we start our application and run our Game loop
 int main()
@@ -224,7 +228,43 @@ int main()
     // Setup Interface
     bars.push_back(TBar(-1, 0.8, 0.5f, 0.03f));
 
-    glm::mat4 model, view, projection;
+    model_ground = glm::mat4(1.f);
+    model_ground = glm::translate(model_ground, glm::vec3(0.f, -0.7f, 0.f));
+
+    model_rock = glm::mat4(1.f);
+    model_rock = glm::translate(model_rock, glm::vec3(-0.3, -0.7f, 0.f));
+    model_rock = glm::rotate(model_rock, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+    float scaleFactor = 1.f / 20;
+    model_rock = glm::scale(model_rock, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+
+    model_sub = glm::mat4(1.f);
+    model_sub = glm::translate(model_sub, glm::vec3(0.4f, -0.5f, 0.f));
+    scaleFactor = 1.f / 1000;
+    model_sub = glm::scale(model_sub, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+
+    envMap->models.push_back(model_ground);
+    envMap->models.push_back(model_rock);
+    envMap->models.push_back(model_sub);
+    envMap->view = light_view;
+    envMap->projection = light_projection;
+
+    caustics->model = glm::mat4(1.f);
+    caustics->projection = light_projection;
+    caustics->view = light_view;
+
+    glm::mat4 view;
+
+    model_ground_n = glm::transpose(glm::inverse(glm::mat3(model_ground)));
+    model_rock_n = glm::transpose(glm::inverse(glm::mat3(model_rock)));
+    model_sub_n = glm::transpose(glm::inverse(glm::mat3(model_sub)));
+
+    objectShader->Use();
+    objectShader->SetMat4("lightProjection", light_projection);
+    objectShader->SetMat4("lightView", light_view);
+
+    waterShader->Use();
+    waterShader->SetMat4("model", glm::mat4(1.f));
+
     // Game loop
     while (!glfwWindowShouldClose(window))
     {
@@ -234,7 +274,7 @@ int main()
         GLfloat currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
 
-        //glfwSetWindowTitle(window, std::to_string(1.f / (deltaTime)).c_str());
+        glfwSetWindowTitle(window, std::to_string(1.f / (deltaTime)).c_str());
         lastFrame = currentFrame;
 
         waterUpdTimer += deltaTime;
@@ -242,38 +282,10 @@ int main()
         if (waterUpdTimer > 0.032) {
             waterUpdTimer -= 0.032;
             // Upd water
-            water->Update();
-
-            // Upd EnvMap
-            model = glm::mat4(1.f);
-            model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
-            std::vector<glm::mat4> models;
-            models.push_back(model);
-
-            model = glm::mat4(1.f);
-            model = glm::translate(model, glm::vec3(-0.3, -0.7f, 0.f));
-            model = glm::rotate(model, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-            float scaleFactor = 1.f / 20;
-            model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-
-            models.push_back(model);
-
-            model = glm::mat4(1.f);
-            model = glm::translate(model, glm::vec3(0.4f, -0.5f, 0.f));
-            scaleFactor = 1.f / 1000;
-            model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-            models.push_back(model);
-
-            envMap->models = models;
-            envMap->view = light_view;
-            envMap->projection = light_projection;
+            water->Update();           
+            // Env upd
             envMap->Draw(*envMapShader);
-
             // Upd caustics
-            caustics->model = glm::mat4(1.f);
-            caustics->projection = light_projection;
-            caustics->view = light_view;
-
             caustics->Draw(*causticsShader, water->current_frame, envMap->Frame);
         }
 
@@ -283,14 +295,14 @@ int main()
         Do_Movement();
 
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-        DrawScene(model, view, projection, skyboxVAO, cubemapTexture);
+        DrawScene(view, projection, skyboxVAO, cubemapTexture);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glBindTexture(GL_TEXTURE_2D, Frame);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        DrawScene(model, view, projection, skyboxVAO, cubemapTexture);
+        DrawScene(view, projection, skyboxVAO, cubemapTexture);
         
         //Water
         view = camera.GetViewMatrix();
@@ -302,7 +314,6 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, Frame);
         
-        waterShader->SetMat4("model", glm::mat4(1.f));
         waterShader->SetMat4("view", view);
         waterShader->SetMat4("projection", projection);
         waterShader->SetVec3("cameraPos", camera.Position);
@@ -482,12 +493,11 @@ void genFBuffer(GLuint& FBO, GLuint& RBO, GLuint& Frame) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint& cubemapTexture) {
+void DrawScene(glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint& cubemapTexture) {
     // Clear the colorbuffer
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    model = glm::mat4(1.f);
     view = camera.GetViewMatrix();
     projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f);
 
@@ -495,13 +505,10 @@ void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint&
 
     //Ground
     objectShader->Use();
-    model = glm::mat4(1.f);
-    model = glm::translate(model, glm::vec3(0.f, -0.7f, 0.f));
-    objectShader->SetMat4("model", model);
+    objectShader->SetMat4("model", model_ground);
+    objectShader->SetMat3("modelNormal", model_ground_n);
     objectShader->SetMat4("view", view);
     objectShader->SetMat4("projection", projection);
-    objectShader->SetMat4("lightProjection", light_projection);
-    objectShader->SetMat4("lightView", light_view);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, caustics->Frame);
@@ -509,36 +516,19 @@ void DrawScene(glm::mat4& model, glm::mat4& view, glm::mat4& projection, GLuint&
     ground->Draw(*objectShader);
 
     //Rock
-    model = glm::mat4(1.f);
-    model = glm::translate(model, glm::vec3(-0.3, -0.7f, 0.f));
-    model = glm::rotate(model, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-    float scaleFactor = 1.f / 20;
-    model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
     objectShader->Use();
-    objectShader->SetMat4("model", model);
+    objectShader->SetMat4("model", model_rock);
+    objectShader->SetMat3("modelNormal", model_rock_n);
     objectShader->SetMat4("view", view);
     objectShader->SetMat4("projection", projection);
-    objectShader->SetMat4("lightProjection", light_projection);
-    objectShader->SetMat4("lightView", light_view);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, caustics->Frame);
-    objectShader->SetInt("caustics", 1);
     rock->Draw(*objectShader);
 
     //Submarine
-    model = glm::mat4(1.f);
-    model = glm::translate(model, glm::vec3(0.4f, -0.5f, 0.f));
-    scaleFactor = 1.f / 1000;
-    model = glm::scale(model, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
     objectShader->Use();
-    objectShader->SetMat4("model", model);
+    objectShader->SetMat4("model", model_sub);
+    objectShader->SetMat3("modelNormal", model_sub_n);
     objectShader->SetMat4("view", view);
     objectShader->SetMat4("projection", projection);
-    objectShader->SetMat4("lightProjection", light_projection);
-    objectShader->SetMat4("lightView", light_view);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, caustics->Frame);
-    objectShader->SetInt("caustics", 1);
     shark->Draw(*objectShader);
 
     //SkyBox

@@ -9,7 +9,7 @@ uniform mat4 projection;
 
 uniform mat4 lightView;
 uniform mat4 lightProjection;
-
+uniform mat3 modelNormal;
 
 out float lightIntensity;
 out vec3 lightPos;
@@ -18,7 +18,7 @@ out vec2 TexCoords;
 
 void main() {
 	
-	lightIntensity = -dot(vec3(0.f, -1.f, 0.f), normalize(transpose(inverse(mat3(model))) * normal));
+	lightIntensity = -dot(vec3(0.f, -1.f, 0.f), normalize(modelNormal * normal));
 	
 	vec4 worldPos = model * vec4(position, 1.f);
 
