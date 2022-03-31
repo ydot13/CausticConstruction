@@ -16,7 +16,6 @@ public:
 		Setup();
 	}
 
-	void Resize();
 	void Draw(Shader shader);
 
 	~EnvironmentMap();

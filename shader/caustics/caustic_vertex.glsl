@@ -31,7 +31,7 @@ void main() {
 	vec2 currentPosition = projectedWaterPosition.xy;
 	vec2 coords = currentPosition * 0.5f + 0.5f;
 
-	vec3 refracted = refract(vec3(0.f, -1.f, 0.f), waterNormal, eta);
+	vec3 refracted = refract(light, waterNormal, eta);
 	vec4 projectedRefractionVector = projection * view * vec4(refracted, 1.);
 	vec3 refractedDirection = projectedRefractionVector.xyz;
 

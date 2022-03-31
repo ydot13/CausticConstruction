@@ -26,6 +26,7 @@ void Mesh::setupMesh() {
 	glBindVertexArray(0);
 }
 
+// Setup textures to shader to uiniform material.diffuse/specular(n)
 void Mesh::Draw(Shader& shader) const {
 	unsigned int diffuseNr = 1;
 	unsigned int specularNr = 1;
@@ -46,10 +47,7 @@ void Mesh::Draw(Shader& shader) const {
 		shader.SetFloat(("material." + name).c_str(), i);
 		glBindTexture(GL_TEXTURE_2D, textures[i].id);
 	}
-	//shader.SetFloat("material.shininess", shininess);
-
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
-	//glActiveTexture(GL_TEXTURE0);	
 }

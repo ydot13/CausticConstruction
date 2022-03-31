@@ -4,11 +4,13 @@
 #include<algorithm>
 #include<vector>
 
+// My includes
 #include"Utilitis.h"
-
 #include"Mesh.h"
 
+// Class of bar with button
 class TBar {
+	// Button object
 	struct TBarButton
 	{
 		TBarButton(float bX, float bY, float bW) : barX(bX), barY(bY), barWidth(bW) {
@@ -42,6 +44,7 @@ class TBar {
 			btnMesh = std::make_shared<Mesh>(v, i, t);
 		}
 
+		// Check intersection with cursor
 		bool Hit(float x, float y) {
 			x -= barX;
 			y -= barY;
@@ -54,8 +57,11 @@ class TBar {
 		}
 
 		float Width, Height;
+		// Pos of btn in local system
 		float posX, posY;
+		// Pos of bar in sreen system
 		float barX, barY;
+		// Width of bar
 		float barWidth;
 		std::shared_ptr<Mesh> btnMesh;
 	};
@@ -85,11 +91,18 @@ public:
 		std::vector<Texture> t = { barTex };
 		barMesh = std::make_shared<Mesh>(v, i, t);
 	}
+	// Draw Tbar
 	void Show();
+
+	// Events
 	void OnMouseDown(float x, float y);
 	void OnMove(float x, float y);
 	void OnMouseUp(float x, float y);
+
+	// get Val from 0.f to 1.f
 	float getValue();
+
+	// Check intersection with cursor
 	bool Hit(float x, float y);
 
 private:

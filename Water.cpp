@@ -24,6 +24,7 @@ Water::Water(GLuint* w, GLuint* h, int r) : width(w), height(h), resolution(r) {
 }
 
 void Water::Update() {
+	// Set up FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, current_frame, 0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
@@ -33,19 +34,24 @@ void Water::Update() {
 		std::cout << "glCheckFramebufferStatus error 0x%X\n" << fboStatus;
 	}
 	else {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		// clear
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glViewport(0, 0, resolution, resolution);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// set viewport
+		glViewport(0, 0, resolution, resolution);
+
+		// setup shader
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, last_frame);
 		update_shader.Use();
 		update_shader.SetInt("lastFrame", 0);
 		update_shader.SetFloat("delta", resolution - 5);
+
+		// draw new height-map
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glBindVertexArray(0);
-
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
@@ -54,8 +60,10 @@ void Water::Update() {
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	// swap prev and cur height-maps
 	std::swap(current_frame, last_frame);
 
+	// return screen prop for viewport
 	glViewport(0, 0, *width, *height);
 }
 

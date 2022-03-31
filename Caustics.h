@@ -2,13 +2,15 @@
 #include"Mesh.h"
 #include"Utilitis.h"
 
+// Class of caustics on underwater surface
 class Caustics {
 public:
 	Caustics(GLuint* w, GLuint* h, int r)
-		: waterGrid(genGrid(256)), width(w), height(h), resolution(r) {
+		: waterGrid(genGrid(512)), width(w), height(h), resolution(r) {
 		Setup();
 	}
 
+	// Draw caustics texture
 	void Draw(Shader shader, GLuint water, GLuint env);
 
 	glm::mat4 model;
@@ -23,36 +25,50 @@ public:
 
 private:
 
+	// Grid of water
 	std::shared_ptr<Mesh> waterGrid;
 
 	GLenum fboStatus;
 	void Setup();
+
+	// Width and height of screen
 	GLuint* width;
 	GLuint* height;
+	// Resolution of texture
 	int resolution;	
 };
 
 void Caustics::Draw(Shader shader, GLuint water, GLuint env) {
+	// bind frame buffer
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+	// Add blend for caustics addition
 	glEnable(GL_BLEND);
 	glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ONE, GL_ZERO);
 	glBlendEquation(GL_FUNC_ADD);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glViewport(0, 0, resolution, resolution);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	shader.Use();
 
+	// clear 
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// set texture viewport
+	glViewport(0, 0, resolution, resolution);
+	
+	// setup shader + draw
+	shader.Use();
 	shader.SetMat4("view", view);
 	shader.SetMat4("model", model);
 	shader.SetMat4("projection", projection);
+	// water height-map
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, water);
 	shader.SetInt("water", 0);
+	// environment map
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, env);
 	shader.SetInt("env", 1);
-	shader.SetFloat("deltaEnvTexture", 1.f / (resolution-10));
+	// 1.f / end.resolution
+	shader.SetFloat("deltaEnvTexture", 1.f / 1000);
 	shader.SetVec3("light", glm::vec3(0.f, -1.f, 0.f));
 
 	waterGrid->Draw(shader);
@@ -66,6 +82,7 @@ void Caustics::Draw(Shader shader, GLuint water, GLuint env) {
 	glViewport(0, 0, *width, *height);
 }
 
+//create framebuffer
 void Caustics::Setup() {
 	Frame = CreateTexture(resolution, resolution, GL_RGBA16F, GL_FLOAT);
 	glGenFramebuffers(1, &FBO);

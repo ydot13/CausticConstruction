@@ -1,6 +1,13 @@
 #pragma once
+
+// GLM
 #include<glm/glm.hpp>
+
+// My includes
 #include"Shader.h"
+#include"Drawable.h"
+
+// Std
 #include<vector>
 
 //Assimp
@@ -8,7 +15,6 @@
 #include<assimp/scene.h>
 #include<assimp/postprocess.h>
 
-#include"Drawable.h"
 
 enum TextureType {
 	DIFFUSE,
@@ -27,6 +33,7 @@ struct Texture {
 	aiString path;
 };
 
+// class of polygon mesh with textures(diffuse + specular)
 class Mesh : public Drawable{
 public:
 	std::vector<Vertex> vertices;
