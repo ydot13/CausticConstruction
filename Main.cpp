@@ -138,7 +138,7 @@ int main()
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     // Create window
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "LearnOpenGL", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Caustics", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     // App without console
@@ -158,6 +158,12 @@ int main()
     // Initialize GLEW to setup the OpenGL Function pointers
     glewExperimental = GL_TRUE;
     glewInit();
+
+    // Setup icon
+    GLFWimage icons[1];
+    icons[0].pixels = SOIL_load_image("icon.png", &icons[0].width, &icons[0].height, 0, SOIL_LOAD_RGBA);
+    glfwSetWindowIcon(window, 1, icons);
+    SOIL_free_image_data(icons[0].pixels);
 
     // Define the viewport dimensions
     glViewport(0, 0, screenWidth, screenHeight);
