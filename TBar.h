@@ -39,7 +39,7 @@ class TBar {
 			barTex.id = loadTexture("res\\interface\\btn.jpg", GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR);
 
 			barTex.path = "res\\interface\\btn.jpg";
-			barTex.type = DIFFUSE;
+			barTex.type = TextureType::DIFFUSE;
 			std::vector<Texture> t = { barTex };
 			btnMesh = std::make_shared<Mesh>(v, i, t);
 		}
@@ -87,7 +87,7 @@ public:
 		barTex.id = loadTexture("res\\interface\\bar.jpg", GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR);
 
 		barTex.path = "res\\interface\\bar.jpg";
-		barTex.type = DIFFUSE;
+		barTex.type = TextureType::DIFFUSE;
 		std::vector<Texture> t = { barTex };
 		barMesh = std::make_shared<Mesh>(v, i, t);
 	}
@@ -114,48 +114,3 @@ private:
 	std::shared_ptr<Mesh> barMesh;
 	Shader shdr = Shader("shader\\interface\\interface_vertex.glsl", "shader\\interface\\interface_fragment.glsl");
 };
-
-bool TBar::Hit(float x, float y) {
-	return (x >= posX && x <= posX + Width && y >= posY && y <= posY + Height);
-}
-
-void TBar::OnMouseDown(float x, float y) {
-	if (BarButton.Hit(x, y)) {
-		m_bButtonClick = true;
-		BarButton.SetPos(x);
-	}
-	else if (Hit(x, y)) {
-		BarButton.SetPos(x);
-	}
-}
-
-void TBar::OnMove(float x, float y) {
-	if (!m_bButtonClick)
-		return;
-
-	BarButton.SetPos(x);
-}
-
-float TBar::getValue() {
-	return BarButton.posX / Width;
-}
-
-void TBar::OnMouseUp(float x, float y) {
-	m_bButtonClick = false;
-}
-
-void TBar::Show() {
-	//Draw bar
-	glDisable(GL_DEPTH_TEST);
-	glm::mat4 model(1.f);
-	model = glm::translate(model, glm::vec3(posX, posY, 0.f));
-	shdr.Use();
-	shdr.SetMat4("model", model);
-	barMesh->Draw(shdr);
-	//Draw button
-	model = glm::mat4(1.f);
-	model = glm::translate(model, glm::vec3(posX + BarButton.posX, posY + BarButton.posY - (BarButton.Height - Height)/2, 0.f));
-	shdr.SetMat4("model", model);
-	BarButton.btnMesh->Draw(shdr);
-	glEnable(GL_DEPTH_TEST);
-}

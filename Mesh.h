@@ -16,7 +16,7 @@
 #include<assimp/postprocess.h>
 
 
-enum TextureType {
+enum class TextureType {
 	DIFFUSE,
 	SPECULAR
 };

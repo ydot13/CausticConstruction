@@ -206,7 +206,7 @@ int main()
     Texture sand;
     sand.id = loadTexture("res\\sand.jpg");
     sand.path = "res\\sand.jpg";
-    sand.type = DIFFUSE;
+    sand.type = TextureType::DIFFUSE;
     std::vector<Texture> t = {sand};
     ground = std::make_shared<Mesh>(gr_vr, ind, t);
 

@@ -1,5 +1,6 @@
 #include"Mesh.h"
 
+// Setup mesh buffers of verticies and their atributes
 void Mesh::setupMesh() {
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -34,11 +35,11 @@ void Mesh::Draw(Shader& shader) const {
 		glActiveTexture(GL_TEXTURE0 + i);
 		std::string name;
 		switch (textures[i].type) {
-		case DIFFUSE:
+		case TextureType::DIFFUSE:
 			name = "diffuse";
 			name += std::to_string(diffuseNr++);
 			break;
-		case SPECULAR:
+		case TextureType::SPECULAR:
 			name = "specular";
 			name += std::to_string(specularNr++);
 			break;

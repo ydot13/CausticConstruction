@@ -22,15 +22,19 @@ const int MAX_ITERATIONS = 50;
 void main() {
 	vec4 waterInfo = texture(water, position.xz*0.5 + 0.5);
 
+	// world water pos
 	vec3 waterPosition = vec3(position.x, position.y + waterInfo.r, position.z);
 	vec3 waterNormal = normalize(vec3(waterInfo.b, sqrt(1.f - dot(waterInfo.ba, waterInfo.ba)), waterInfo.a).xyz);
 
+	// world pos of water surface
 	oldPosition = waterPosition.xzy;
 
+	// pos of water surface in screen space
 	vec4 projectedWaterPosition = projection*view*vec4(waterPosition, 1.);
 	vec2 currentPosition = projectedWaterPosition.xy;
 	vec2 coords = currentPosition * 0.5f + 0.5f;
 
+	// refracrted vec in screen space
 	vec3 refracted = refract(light, waterNormal, eta);
 	vec4 projectedRefractionVector = projection * view * vec4(refracted, 1.);
 	vec3 refractedDirection = projectedRefractionVector.xyz;
@@ -49,6 +53,7 @@ void main() {
 	vec2 deltaDirection = refractedDirection.xy * factor;
 	float deltaDepth = refractedDirection.z* factor;
 
+	// go through env map while curDepth < envDepth
 	for (int i = 0; i < MAX_ITERATIONS; i++) {
 		
 		currentPosition += deltaDirection;
@@ -62,6 +67,7 @@ void main() {
 		environment = texture(env, 0.5 + 0.5 * currentPosition);
 	}
 
+	// pos of refracted way on underwater surf
 	newPosition = environment.xyz;
 	vec4 projectedEnvPosition = projection * view * vec4(newPosition, 1.0);
 	depth = 0.5 + 0.5 * projectedEnvPosition.z / projectedEnvPosition.w;

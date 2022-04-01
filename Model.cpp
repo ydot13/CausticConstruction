@@ -1,10 +1,12 @@
 #include"Model.h"
 
+// Draw model
 void Model::Draw(Shader& shader) const{
 	for (const auto& mesh : meshes)
 		mesh.Draw(shader);
 }
 
+// load model from .obj file
 void Model::loadModel(const std::string& path) {
 	Assimp::Importer importer;
 	const aiScene* scene = (importer.ReadFile(path, aiProcess_Triangulate | aiProcess_CalcTangentSpace));
@@ -22,6 +24,7 @@ void Model::loadModel(const std::string& path) {
 
 }
 
+// parse assimp nodes of scene
 void Model::processNode(aiNode* node, const aiScene* scene) {
 	for (size_t i = 0; i < node->mNumMeshes; ++i) {
 		aiMesh* mesh = (scene->mMeshes[node->mMeshes[i]]);
@@ -33,6 +36,7 @@ void Model::processNode(aiNode* node, const aiScene* scene) {
 	}
 }
 
+// parse assimp meshes
 Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 	std::vector<Vertex>	verticies;
 	std::vector<unsigned int> indices;
@@ -76,16 +80,17 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 
 	if (mesh->mMaterialIndex >= 0) {
 		aiMaterial* material = (scene->mMaterials[mesh->mMaterialIndex]);
-		std::vector<Texture> diffuseMap = loadMaterialTextures(material, aiTextureType_DIFFUSE, DIFFUSE);
+		std::vector<Texture> diffuseMap = loadMaterialTextures(material, aiTextureType_DIFFUSE, TextureType::DIFFUSE);
 		textures.insert(textures.end(), diffuseMap.begin(), diffuseMap.end());
 
-		std::vector<Texture> specularMap = loadMaterialTextures(material, aiTextureType_SPECULAR, SPECULAR);
+		std::vector<Texture> specularMap = loadMaterialTextures(material, aiTextureType_SPECULAR, TextureType::SPECULAR);
 		textures.insert(textures.end(), specularMap.begin(), specularMap.end());
 	}
 
 	return Mesh(verticies, indices, textures);
 }
 
+// load textures for each meshes
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, TextureType textureType) {
 	std::vector<Texture> textures;
 

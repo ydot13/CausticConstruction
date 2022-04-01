@@ -9,16 +9,19 @@ EnvironmentMap::~EnvironmentMap() {
 void EnvironmentMap::Draw(Shader shader) {
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// clear 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glViewport(0, 0, resolution, resolution);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	shader.Use();
 
+	// set viewport
+	glViewport(0, 0, resolution, resolution);
+	
+	// set shaders
+	shader.Use();
 	shader.SetMat4("view", view);
 	shader.SetMat4("projection", projection);
 
+	// Draw all no-water geomentry
 	for (size_t i = 0; i < objects.size(); i++) {
 		shader.SetMat4("model", models[i]);
 		objects[i]->Draw(shader);

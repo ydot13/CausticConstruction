@@ -7,12 +7,12 @@ in float waterDepth;
 in float depth;
 
 
-
 out vec4 color;
 
 void main() {
 	float causticsIntensity = 0.;
 
+    // intensity of caustic = S of triangle on water surf / S of triangle on underwater surf
     if (depth >= waterDepth) {
         float oldArea = length(dFdx(oldPosition).xyz) * length(dFdy(oldPosition).xyz);
         float newArea = length(dFdx(newPosition).xyz) * length(dFdy(newPosition).xyz);
