@@ -6,7 +6,7 @@ EnvironmentMap::~EnvironmentMap() {
 	glDeleteTextures(1, &Frame);
 }
 
-void EnvironmentMap::Draw(Shader shader) {
+void EnvironmentMap::Draw(Shader& shader) {
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
 	// clear 

@@ -47,5 +47,5 @@ void main() {
 
         computedLightIntensity += causticsIntensity * smoothstep(0., 1., lightIntensity);
     }
-	color = vec4(texture(material.diffuse1, vec2(TexCoords.x, -TexCoords.y)).rgb* computedLightIntensity, 1.);
+	color = vec4(texture(material.diffuse1, vec2(TexCoords.x, 1.f-TexCoords.y)).rgb* computedLightIntensity, 1.);
 }

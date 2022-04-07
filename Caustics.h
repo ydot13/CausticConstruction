@@ -11,12 +11,12 @@ public:
 	}
 
 	// Draw caustics texture
-	void Draw(Shader shader, GLuint water, GLuint env);
+	void Draw(Shader& shader, GLuint water, GLuint env);
 
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 projection;
-	GLuint Frame, FBO;
+	GLuint Frame;
 
 	~Caustics() {
 		glDeleteFramebuffers(1, &FBO);
@@ -24,7 +24,7 @@ public:
 	}
 
 private:
-
+	GLuint FBO;
 	// Grid of water
 	std::shared_ptr<Mesh> waterGrid;
 
@@ -38,7 +38,7 @@ private:
 	int resolution;	
 };
 
-void Caustics::Draw(Shader shader, GLuint water, GLuint env) {
+void Caustics::Draw(Shader& shader, GLuint water, GLuint env) {
 	// bind frame buffer
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 

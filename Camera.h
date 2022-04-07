@@ -30,19 +30,14 @@ const GLfloat ZOOM = 60.0f;
 class Camera
 {
 public:
-    // Camera Attributes
-    glm::vec3 Position;
-    glm::vec3 Front;
-    glm::vec3 Up;
-    glm::vec3 Right;
-    glm::vec3 WorldUp;
-    // Eular Angles
-    GLfloat Yaw;
-    GLfloat Pitch;
-    // Camera options
-    GLfloat MovementSpeed;
-    GLfloat MouseSensitivity;
-    GLfloat Zoom;
+
+    GLfloat getZoom() const {
+        return Zoom;
+    }
+
+    glm::vec3 getPosition() const {
+        return Position;
+    }
 
 
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
@@ -71,4 +66,17 @@ public:
 
 private:
     void updateCameraVectors();
+    // Camera Attributes 
+    glm::vec3 Position;
+    glm::vec3 Front;
+    glm::vec3 Up;
+    glm::vec3 Right;
+    glm::vec3 WorldUp;
+    // Eular Angles
+    GLfloat Yaw;
+    GLfloat Pitch;
+    // Camera options
+    GLfloat MovementSpeed;
+    GLfloat MouseSensitivity;
+    GLfloat Zoom;
 };

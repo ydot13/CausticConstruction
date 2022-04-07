@@ -230,7 +230,7 @@ int main()
     water = std::make_shared<Water>(&screenWidth, &screenHeight, 256);
 
     // Caustic setup
-    caustics = std::make_shared<Caustics>(&screenWidth, &screenHeight, 2048);
+    caustics = std::make_shared<Caustics>(&screenWidth, &screenHeight, 1024);
 
     // Setup FrameBuffer
     GLuint FBO, RBO, Frame;
@@ -280,7 +280,6 @@ int main()
     // Game loop
     while (!glfwWindowShouldClose(window))
     {
-
         // Check window resizing
         check_size(window, FBO, RBO, Frame);
 
@@ -319,10 +318,11 @@ int main()
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        // Render no water geometry
+        //Render no water geometry
         DrawScene(view, projection, skyboxVAO, cubemapTexture);
         
         // Render using frame buffer (Screen Space Refraction)
+
         view = camera.GetViewMatrix();
         waterShader->Use();
         waterShader->SetInt("skybox", 0);
@@ -331,12 +331,13 @@ int main()
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, Frame);
-        
+        waterShader->SetMat4("model", glm::mat4(1.f));
         waterShader->SetMat4("view", view);
         waterShader->SetMat4("projection", projection);
-        waterShader->SetVec3("cameraPos", camera.Position);
+        waterShader->SetVec3("cameraPos", camera.getPosition());
         waterShader->SetFloat("turb", bars[0].getValue());
 
+ 
         water->Draw(*waterShader);
 
         // Render interface
@@ -516,7 +517,7 @@ void DrawScene(glm::mat4& view, glm::mat4& projection, GLuint& skyboxVAO, GLuint
 
     // Set view + proj matrices
     view = camera.GetViewMatrix();
-    projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(camera.getZoom()), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f);
 
     // Draw ground
     objectShader->Use();
@@ -592,7 +593,7 @@ void processCursorWaterIntersection(double x, double y) {
         sc1 = glm::vec4(x, y, -1.f, 1.f);
     }
 
-    glm::mat4 invrs = glm::inverse(camera.GetViewMatrix()) * glm::inverse(glm::perspective(glm::radians(camera.Zoom), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f));
+    glm::mat4 invrs = glm::inverse(camera.GetViewMatrix()) * glm::inverse(glm::perspective(glm::radians(camera.getZoom()), (GLfloat)screenWidth / (GLfloat)screenHeight, 0.1f, 100.0f));
     glm::vec4 world1 = invrs * sc1; // point on nearest camera plane
     glm::vec4 world2 = invrs * sc2; // point on far camera plane
     world1 /= world1.w;

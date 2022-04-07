@@ -15,13 +15,15 @@ public:
 	void AddDrop(float x, float y);
 
 	// Draw mesh of water using height-map
-	void Draw(Shader shdr);
+	void Draw(Shader& shdr);
 	
 	~Water();
 
 	std::shared_ptr<Mesh> waterGrid;
+	GLuint current_frame;
+private:
 	// For height-map
-	GLuint last_frame, current_frame, FBO, VAO, VBO;
+	GLuint last_frame, FBO, VAO, VBO;
 	GLenum fboStatus;
 
 	// verticies of square of texture height-map

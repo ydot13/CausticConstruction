@@ -28,13 +28,15 @@ public:
 
 	void Draw(Shader& shader) const override;
 
+	
+
+	void loadModel(const std::string& path);
+private:
 	std::vector<Mesh> meshes;
 	std::string directory;
 	// set of loaded textures
 	std::unordered_map<std::string, Texture> loaded_textures;
 
-	void loadModel(const std::string& path);
-private:
 	void processNode(aiNode* node, const aiScene* scene);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 	std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, TextureType textureType);

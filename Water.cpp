@@ -35,6 +35,7 @@ void Water::Update() {
 	}
 	else {
 		// clear
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -59,7 +60,6 @@ void Water::Update() {
 	glBindTexture(GL_TEXTURE_2D, current_frame);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
 	// swap prev and cur height-maps
 	std::swap(current_frame, last_frame);
 
@@ -104,7 +104,7 @@ void Water::AddDrop(float x, float y) {
 	glViewport(0, 0, *width, *height);
 }
 
-void Water::Draw(Shader shdr) {
+void Water::Draw(Shader& shdr) {
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, last_frame);
 	shdr.SetInt("heightMap", 3);

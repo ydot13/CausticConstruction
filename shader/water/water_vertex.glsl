@@ -15,17 +15,17 @@ out vec3 skyCoords;
 
 const float eta = 0.7504f;
 out float reflectionFactor;
-//uniform mat3 modelNorm;
+uniform mat3 modelNorm;
 
 void main() {
-	vec3 Position = (model*vec4(position.x, position.y + texture(heightMap, position.xz*0.5 + 0.5).r, position.z, 1.f)).xyz;
+	vec3 Position = (vec4(position.x, position.y + texture(heightMap, position.xz*0.5 + 0.5).r, position.z, 1.f)).xyz;
 	vec4 info = texture(heightMap, position.xz * 0.5 + 0.5);
 	vec3 norm = vec3(info.b, sqrt(1.f - dot(info.ba, info.ba)), info.a).xyz;
 	vec3 eye = normalize(Position - cameraPos);
 	vec3 R = normalize(reflect(eye, normalize(norm)));
 	skyCoords = R;
 
-	reflectionFactor = 0.1 + 1.*pow(1. + dot(eye, norm), 2);
+	reflectionFactor = 0.1 + pow(1. + dot(eye, norm), 2);
 
 	vec3 refracted = normalize(refract(eye, normalize(norm), eta));
 

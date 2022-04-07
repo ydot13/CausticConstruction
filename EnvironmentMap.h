@@ -16,7 +16,7 @@ public:
 		Setup();
 	}
 
-	void Draw(Shader shader);
+	void Draw(Shader& shader);
 
 	~EnvironmentMap();
 
@@ -25,8 +25,9 @@ public:
 	glm::mat4 view;
 	glm::mat4 projection;
 
-	GLuint Frame, FBO, RBO;
+	GLuint Frame;
 private:
+	GLuint FBO, RBO;
 	std::vector<std::shared_ptr<Drawable>> objects;
 	GLuint* width;
 	GLuint* height;
